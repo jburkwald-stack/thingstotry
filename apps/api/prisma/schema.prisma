@@ -1,0 +1,232 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id             String   @id @default(cuid())
+  email          String   @unique
+  name           String?
+  avatar_url     String?
+  provider       String
+  provider_id    String
+  points_balance Int      @default(0)
+  created_at     DateTime @default(now())
+  updated_at     DateTime @updatedAt
+
+  posts         Post[]
+  post_likes    PostLike[]
+  saved_events  SavedEvent[]
+  plans         Plan[]
+  plan_invites  PlanInvite[]
+  points_ledger PointsLedger[]
+  redemptions   Redemption[]
+  comments      Comment[]
+
+  @@map("users")
+}
+
+model Category {
+  id         String   @id @default(cuid())
+  name       String   @unique
+  slug       String   @unique
+  icon       String?
+  color      String?
+  created_at DateTime @default(now())
+
+  events Event[]
+
+  @@map("categories")
+}
+
+model Event {
+  id              String   @id @default(cuid())
+  source_name     String   @default("seed")
+  source_event_id String   @default("")
+  title           String
+  description     String?
+  image_url       String?
+  category_id     String?
+  tags            String?  // comma-separated for SQLite
+  difficulty      String   @default("FUN")
+  is_free         Boolean  @default(false)
+  price_min       Float?
+  price_max       Float?
+  kid_friendly    Boolean  @default(false)
+  indoor_outdoor  String   @default("BOTH")
+  venue_name      String?
+  address         String?
+  city            String?
+  state           String?
+  country         String?
+  lat             Float?
+  lng             Float?
+  start_datetime  DateTime
+  end_datetime    DateTime?
+  event_url       String?
+  ticket_url      String?
+  organizer       String?
+  created_at      DateTime @default(now())
+  updated_at      DateTime @updatedAt
+
+  category     Category?    @relation(fields: [category_id], references: [id])
+  saved_events SavedEvent[]
+  plan_events  PlanEvent[]
+  posts        Post[]
+
+  @@map("events")
+}
+
+model SavedEvent {
+  id         String   @id @default(cuid())
+  user_id    String
+  event_id   String
+  created_at DateTime @default(now())
+
+  user  User  @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  event Event @relation(fields: [event_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, event_id])
+  @@map("saved_events")
+}
+
+model Plan {
+  id          String    @id @default(cuid())
+  user_id     String
+  title       String
+  description String?
+  date        DateTime?
+  is_public   Boolean   @default(false)
+  invite_code String?   @unique
+  created_at  DateTime  @default(now())
+  updated_at  DateTime  @updatedAt
+
+  user    User         @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  events  PlanEvent[]
+  invites PlanInvite[]
+
+  @@map("plans")
+}
+
+model PlanInvite {
+  id         String   @id @default(cuid())
+  plan_id    String
+  inviter_id String
+  invitee_id String?
+  email      String?
+  status     String   @default("PENDING")
+  created_at DateTime @default(now())
+
+  plan    Plan @relation(fields: [plan_id], references: [id], onDelete: Cascade)
+  inviter User @relation(fields: [inviter_id], references: [id])
+
+  @@map("plan_invites")
+}
+
+model PlanEvent {
+  id       String @id @default(cuid())
+  plan_id  String
+  event_id String
+
+  plan  Plan  @relation(fields: [plan_id], references: [id], onDelete: Cascade)
+  event Event @relation(fields: [event_id], references: [id], onDelete: Cascade)
+
+  @@unique([plan_id, event_id])
+  @@map("plan_events")
+}
+
+model Post {
+  id             String   @id @default(cuid())
+  user_id        String
+  event_id       String?
+  caption        String
+  image_url      String
+  thumbnail_url  String?
+  status         String   @default("APPROVED")
+  points_awarded Int      @default(0)
+  created_at     DateTime @default(now())
+
+  user     User       @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  event    Event?     @relation(fields: [event_id], references: [id])
+  likes    PostLike[]
+  comments Comment[]
+
+  @@map("posts")
+}
+
+model PostLike {
+  id         String   @id @default(cuid())
+  user_id    String
+  post_id    String
+  created_at DateTime @default(now())
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  post Post @relation(fields: [post_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, post_id])
+  @@map("post_likes")
+}
+
+model Comment {
+  id         String   @id @default(cuid())
+  user_id    String
+  post_id    String
+  text       String
+  created_at DateTime @default(now())
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  post Post @relation(fields: [post_id], references: [id], onDelete: Cascade)
+
+  @@map("comments")
+}
+
+model PointsLedger {
+  id         String   @id @default(cuid())
+  user_id    String
+  delta      Int
+  reason     String
+  ref_type   String?
+  ref_id     String?
+  created_at DateTime @default(now())
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@map("points_ledger")
+}
+
+model RewardCatalog {
+  id                       String   @id @default(cuid())
+  type                     String   @default("GENERIC")
+  brand_name               String?
+  title                    String
+  description              String
+  cost_points              Int
+  discount_type            String   @default("PERCENT")
+  discount_value           String?
+  enabled                  Boolean  @default(true)
+  max_redemptions_per_user Int      @default(1)
+  created_at               DateTime @default(now())
+  updated_at               DateTime @updatedAt
+
+  redemptions Redemption[]
+
+  @@map("reward_catalog")
+}
+
+model Redemption {
+  id          String   @id @default(cuid())
+  user_id     String
+  reward_id   String
+  code_issued String?
+  status      String   @default("ISSUED")
+  created_at  DateTime @default(now())
+
+  user   User          @relation(fields: [user_id], references: [id])
+  reward RewardCatalog @relation(fields: [reward_id], references: [id])
+
+  @@map("redemptions")
+}

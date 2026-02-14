@@ -1,0 +1,34 @@
+{
+  "name": "thingstotry",
+  "version": "1.0.0",
+  "description": "Things to Try - Mobile-first PWA for discovering local events",
+  "private": true,
+  "packageManager": "pnpm@8.10.0",
+  "scripts": {
+    "dev": "concurrently \"pnpm --filter @thingstotry/api dev\" \"pnpm --filter @thingstotry/web dev\"",
+    "build": "pnpm --filter @thingstotry/shared build && pnpm --filter @thingstotry/api build && pnpm --filter @thingstotry/web build",
+    "start": "concurrently \"pnpm --filter @thingstotry/api start:prod\" \"pnpm --filter @thingstotry/web start\"",
+    "test": "pnpm -r test",
+    "lint": "pnpm -r lint",
+    "format": "prettier --write \"**/*.{js,jsx,ts,tsx,json,md}\"",
+    "db:generate": "pnpm --filter @thingstotry/api db:generate",
+    "db:push": "pnpm --filter @thingstotry/api db:push",
+    "db:migrate": "pnpm --filter @thingstotry/api db:migrate",
+    "db:seed": "pnpm --filter @thingstotry/api db:seed",
+    "ingest": "pnpm --filter @thingstotry/api ingest"
+  },
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "@typescript-eslint/eslint-plugin": "^6.12.0",
+    "@typescript-eslint/parser": "^6.12.0",
+    "concurrently": "^8.2.2",
+    "eslint": "^8.54.0",
+    "eslint-config-prettier": "^9.0.0",
+    "prettier": "^3.1.0",
+    "typescript": "^5.3.2"
+  }
+}
